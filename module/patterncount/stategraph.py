@@ -30,8 +30,9 @@ class SequenceMap(object):
 
                 self._seq_hashmap[fc][seq_key].append(idx)
 
+        size_of_map = sys.getsizeof(self._seq_hashmap) / 1000000
         message = 'Completed Sequence Hashing for Support Count (Size): ' + str(
-            sys.getsizeof(self._seq_hashmap)) + ' bytes'
+            size_of_map) + ' MB'
         print_fun(message)
 
     def find_pattern_occurences(self, pattern_df: pd.DataFrame) -> int:

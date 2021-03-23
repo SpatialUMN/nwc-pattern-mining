@@ -1,2 +1,3 @@
 # Testing various modules:
-- **stategraph.init_seq_map**: `python -m tests.mining.test_stategraph`
+- **stategraph**: `python -m tests.patterncount.test_stategraph`
+- **latticegraph**: `python -m tests.mining.test_latticegraph`
