@@ -20,8 +20,14 @@ class LatticeNode:
         """
         self._parents.extend(parents)
 
+    def get_parents(self) -> list:
+        return self._parents
+
     def add_children(self, children: list) -> None:
         """Args:
             children (list): list of lattice node instances
         """
         self._children.extend(children)
+
+    def get_children(self) -> list:
+        return self._children

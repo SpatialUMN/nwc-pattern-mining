@@ -7,7 +7,7 @@ from .latticenode import LatticeNode
 class LatticeGraph:
 
     def __init__(self):
-        # Initialises atleast first level
+        # Instantiates atleast first level, stores actual nodes in depth: dimension mappings
         self._nodes_by_level = {0: dict()}
 
     def get_node(self, depth: int, dimension: tuple) -> LatticeNode:
@@ -70,16 +70,68 @@ class LatticeGraph:
             # Switch queues for next level
             level_queue = temp_queue
 
-    def __str__(self):
+    def prune_nodes_recursively(self, depth: int, dimension: tuple, prune_type: str) -> int:
         """Summary
-        To represent and test graph created
+        Prunes nodes recursively both sides either parents or children
+        Args:
+            depth (int): depth at which node is located
+            dimension (tuple): dimensions of the node
+            prune_type (str): Parents or children
+        """
+        num_of_pruned_nodes = 0
+        lattice_node_inst = self.get_node(depth, dimension)
+
+        if lattice_node_inst.is_node_pruned():
+            return num_of_pruned_nodes
+
+        # Else we prune the node and move forward
+        lattice_node_inst.prune_node()
+        num_of_pruned_nodes += 1
+
+        # deciding where to on the basis of prune type
+        next_depth = 0
+        next_level_nodes = list()
+        if prune_type == 'parents':
+            next_depth = depth - 1
+            next_level_nodes = lattice_node_inst.get_parents()
+
+        elif prune_type == 'children':
+            next_depth = depth + 1
+            next_level_nodes = lattice_node_inst.get_children()
+
+        else:
+            raise Exception('Wrong prune type provided')
+
+        # Using DFS for the task
+        for next_level_dimension in next_level_nodes:
+            num_of_pruned_nodes += self.prune_nodes_recursively(
+                next_depth, next_level_dimension, prune_type)
+
+        return num_of_pruned_nodes
+
+    def _get_graph_as_dict(self):
+        """Summary
+        private method to convert graph to a recursive dictionary
         """
         temp_dict = dict()
         for depth, dimension_dict in self._nodes_by_level.items():
             temp_dict[depth] = dict()
             for dimension, latticenode in dimension_dict.items():
-                temp_dict[depth][dimension] = dict()
-                temp_dict[depth][dimension]['parents'] = latticenode._parents
-                temp_dict[depth][dimension]['children'] = latticenode._children
+                if not latticenode.is_node_pruned():
+                    temp_dict[depth][str(dimension)] = {
+                        'parents': [str(x) for x in latticenode.get_parents()],
+                        'children': [str(x) for x in latticenode.get_children()]}
 
-        return str(temp_dict)
+        return temp_dict
+
+    def __str__(self):
+        """Summary
+        returns graph as a string, excluding the pruned nodes
+        """
+        return str(self._get_graph_as_dict())
+
+    def beautify_print_graph(self) -> None:
+        """Summary
+        prints graph with proper identations
+        """
+        print(json.dumps(self._get_graph_as_dict(), indent=4))
