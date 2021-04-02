@@ -7,7 +7,8 @@ from .latticenode import LatticeNode
 class LatticeGraph:
 
     def __init__(self):
-        # Instantiates atleast first level, stores actual nodes in depth: dimension mappings
+        # Instantiates atleast first level, stores actual nodes in
+        # {depth: {dimension: parents, children }} mappings
         self._nodes_by_level = {0: dict()}
 
     def get_node(self, depth: int, dimension: tuple) -> LatticeNode:

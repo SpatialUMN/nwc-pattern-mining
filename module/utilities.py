@@ -14,8 +14,12 @@ def print_fun(message: str, status: str = '') -> None:
     print(custom_msg.format(message, separator))
 
 
-def stringify_dataframe(data: pd.DataFrame, start_idx: int, end_idx: int) -> str:
+def stringify_dataframe(data: pd.DataFrame, start_idx: int = -1, end_idx: int = -1) -> str:
     """Summary
         Used to stringify dataframes for hashing
     """
-    return data.iloc[start_idx: end_idx].to_json(orient='records')
+    # If need to stringify complete dataframe
+    if start_idx != -1:
+        data = data.iloc[start_idx: end_idx]
+
+    return data.to_json(orient='records')
