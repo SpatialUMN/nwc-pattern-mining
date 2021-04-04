@@ -1,10 +1,13 @@
 """Summary
 Hashes / enumerates patterns, finds top patterns
 """
+import sys
 import numpy as np
 import pandas as pd
+from ..utilities import print_fun
 
 # Specific constants
+patterns_alert_threshold = 1000
 metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
                     'Confidence', 'Single Occurence Index']
@@ -12,7 +15,7 @@ metric_col_names = ['Count', 'Support', 'Kvalue',
 class EnumeratedPattern:
 
     def __init__(self, anomalous_windows: list, num_of_readings: int,
-                 threshold_metric: str, threshold_value: float) -> None:
+                 lag: int) -> None:
         """Summary
         patterns: to store already visited patterns (serialised dataframe segments)
         occurences: all positions of each pattern sequence
@@ -20,14 +23,12 @@ class EnumeratedPattern:
         support, confidence, crossk: support of the enumerated patterns
         anomalous_windows (list): occurences of anomalous windows
         """
-        if threshold_metric not in metric_names:
-            raise Exception('Wrong metric provided for threshold')
-
+        self._lag = lag
         self._num_of_readings = num_of_readings
         self._anomalous_windows = anomalous_windows
-        self._threshold_metric = threshold_metric
-        self._threshold_value = threshold_value
         self._crossk_const = num_of_readings / len(anomalous_windows)
+
+        self._num_of_patterns = 0
         self._patterns = list()
         self._occurences = list()
         self._patterncount = list()
@@ -36,12 +37,10 @@ class EnumeratedPattern:
         self._support = list()
         self._confidence = list()
         self._crossk = list()
-        self._is_above_threshold = list()
 
-    def enumerate_pattern(self, pattern_str: str, pattern_occurences: int,
-                          lag: int) -> None:
+    def enumerate_pattern(self, pattern_str: str, pattern_occurences: int) -> None:
         """Summary
-        Onboards a patterns (counting all it's metrics)
+            Onboards a patterns (counting all it's metrics)
         Args:
             pattern_str (str): dataframe segment representing sequence, as a string
         """
@@ -54,32 +53,32 @@ class EnumeratedPattern:
 
         self._fill_pattern_counts(pattern_occurences)
 
-        self._fill_pattern_joinsets(pattern_occurences, lag)
+        self._fill_pattern_joinsets(pattern_occurences)
 
         self._fill_pattern_metrics()
 
-        # check if recently added pattern above threshold
-        metric_values = self._get_metric_values(self._threshold_metric)
-        self._is_above_threshold.append(
-            metric_values[-1] >= self._threshold_value)
+        # Monitoring memory size of instance
+        self._num_of_patterns += 1
+        if self._num_of_patterns % patterns_alert_threshold == 0:
+            print_fun(self)
 
     def _fill_pattern_counts(self, pattern_occurences: list) -> None:
         """Summary
-        Fills all fields that are directly derivable for the pattern
+            Fills all fields that are directly derivable for the pattern
         """
         self._occurences.append(pattern_occurences)
         self._patterncount.append(len(pattern_occurences))
 
-    def _fill_pattern_joinsets(self, pattern_occurences: list, lag: int) -> None:
+    def _fill_pattern_joinsets(self, pattern_occurences: list) -> None:
         """Summary
-        Fill joinset cardinalities of pattern occurence w.r.t anomalous windows
+            Fill joinset cardinalities of pattern occurence w.r.t anomalous windows
         """
         joinset_count = 0
         unique_joinset_count = 0
 
         # Finds cooccurences of pattern and anomalous windows
         for index in pattern_occurences:
-            temp_list = list(range(index, index + lag + 1))
+            temp_list = list(range(index, index + self._lag + 1))
             num_of_intersections = len(
                 set(temp_list).intersection(self._anomalous_windows))
 
@@ -92,7 +91,7 @@ class EnumeratedPattern:
 
     def _fill_pattern_metrics(self) -> None:
         """Summary
-        Calculates various metrics for the patterns, like support, confidence, crossk
+            Calculates various metrics for the patterns, like support, confidence, crossk
         """
         # Picking up last element
         patterncount = self._patterncount[-1]
@@ -107,7 +106,7 @@ class EnumeratedPattern:
 
     def _get_metric_values(self, metric: str) -> list:
         """Summary
-        returns metric values depending upon the metric selected
+            returns metric values depending upon the metric selected
         """
         metric_values = list()
 
@@ -122,15 +121,18 @@ class EnumeratedPattern:
 
         return metric_values
 
-    def is_above_threshold(self, pattern_index: int) -> bool:
+    def is_above_threshold(self, pattern_index: int, threshold_metric: str,
+                           threshold_value: float) -> bool:
         """Summary
-        returns pattern at a specific index to be above threshold or not
+            returns pattern at a specific index to be above threshold or not
         """
-        return self._is_above_threshold[pattern_index]
+        metric_values = self._get_metric_values(threshold_metric)
+
+        return metric_values[pattern_index] >= threshold_value
 
     def find_pattern(self, pattern_str: str) -> int:
         """Summary
-        returns index of enumerated pattern
+            returns index of enumerated pattern
         """
         if pattern_str in self._patterns:
             return self._patterns.index(pattern_str)
@@ -140,7 +142,7 @@ class EnumeratedPattern:
     def get_pattern_indexes(self, metric: str, filter_type: str, k: int = -1,
                             threshold: float = -1) -> list:
         """Summary
-        Returns indexes of topK patterns or patterns above a threshold, depending upon metric
+            returns indexes of topK patterns or patterns above a threshold, depending upon metric
         """
         pattern_indexes = list()
 
@@ -163,14 +165,13 @@ class EnumeratedPattern:
 
     def get_patterns(self, pattern_indexes: list) -> list:
         """Summary
-        returns list of patterns as strings, through list of indexes provided
+            returns list of patterns as strings, through list of indexes provided
         """
-        num_of_patterns = len(self._patterns)
-        return [self._patterns[i] for i in range(num_of_patterns) if i in pattern_indexes]
+        return [self._patterns[i] for i in range(self._num_of_patterns) if i in pattern_indexes]
 
     def get_pattern_metrics(self, pattern_indexes: list) -> pd.DataFrame:
         """Summary
-        Provided list of pattern indexes, returns five defined metrics of patterns
+            Provided list of pattern indexes, returns five defined metrics of patterns
         in a structure format (only returning index of the first occurence)
         """
         # manual indexing due to length of pattern occurences being irregular
@@ -183,6 +184,7 @@ class EnumeratedPattern:
                              metric_col_names[4]: pattern_occurences})
 
     def __str__(self):
-        desc = 'Number of patterns: {0} | Metrics recorded for: {1}'
+        size_of_inst = sys.getsizeof(self) / 1000000
+        desc = 'Number of patterns enumerated: {0} | Memory size: {1} MB'
 
-        return desc.format(len(self._patterns, len(self._support)))
+        return desc.format(len(self._num_of_patterns, size_of_inst))

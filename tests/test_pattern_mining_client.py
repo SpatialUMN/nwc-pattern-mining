@@ -2,8 +2,8 @@ import unittest
 import numpy as np
 import pandas as pd
 from module.utilities import stringify_dataframe
-from module.patterncount.stategraph import SequenceMap
-from module.mining.candidatepattern import EnumeratedPattern
+from module.patterncount import SequenceMap
+from module.mining import EnumeratedPattern
 from module.pattern_mining_client import format_output
 
 class TestPatternClient(unittest.TestCase):
@@ -25,42 +25,42 @@ class TestPatternClient(unittest.TestCase):
     pattern_df = engine_data[dimensions].iloc[1:3]
 
     # Instantiating Enumeration of patterns
+    lag = 1
     num_of_readings = 9
     anomalous_windows = engine_data.index[engine_data.ncwindow == 1].tolist()
     enum_patterns_inst = EnumeratedPattern(
-        anomalous_windows, num_of_readings, 'crossk', 2.2)
+        anomalous_windows, num_of_readings, lag)
 
     # Enumerating patterns
-    lag = 1
     test_pattern_str = stringify_dataframe(pattern_df)
     pattern_occurences = seqmap_inst.find_pattern_occurences(pattern_df)
     enum_patterns_inst.enumerate_pattern(
-        test_pattern_str, pattern_occurences, lag)
+        test_pattern_str, pattern_occurences)
 
     dimensions = ['engrpm', 'brkpw', 'nox']
     pattern_df = engine_data[dimensions].iloc[1:3]
     pattern_str = stringify_dataframe(pattern_df)
     pattern_occurences = seqmap_inst.find_pattern_occurences(pattern_df)
-    enum_patterns_inst.enumerate_pattern(pattern_str, pattern_occurences, lag)
+    enum_patterns_inst.enumerate_pattern(pattern_str, pattern_occurences)
 
     dimensions = ['nox']
     pattern_df = engine_data[dimensions].iloc[4:6]
     test_pattern_str_2 = stringify_dataframe(pattern_df)
     pattern_occurences = seqmap_inst.find_pattern_occurences(pattern_df)
     enum_patterns_inst.enumerate_pattern(
-        test_pattern_str_2, pattern_occurences, lag)
+        test_pattern_str_2, pattern_occurences)
 
     dimensions = ['brkpw']
     pattern_df = engine_data[dimensions].iloc[2:4]
     pattern_str = stringify_dataframe(pattern_df)
     pattern_occurences = seqmap_inst.find_pattern_occurences(pattern_df)
-    enum_patterns_inst.enumerate_pattern(pattern_str, pattern_occurences, lag)
+    enum_patterns_inst.enumerate_pattern(pattern_str, pattern_occurences)
 
     dimensions = ['nox', 'brkpw']
     pattern_df = engine_data[dimensions].iloc[7:9]
     pattern_str = stringify_dataframe(pattern_df)
     pattern_occurences = seqmap_inst.find_pattern_occurences(pattern_df)
-    enum_patterns_inst.enumerate_pattern(pattern_str, pattern_occurences, lag)
+    enum_patterns_inst.enumerate_pattern(pattern_str, pattern_occurences)
 
     def test_format_output_threshold(self):
         output_df = format_output(['engrpm', 'brkpw', 'nox'], self.enum_patterns_inst,

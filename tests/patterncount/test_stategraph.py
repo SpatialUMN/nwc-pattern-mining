@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import pandas as pd
-from module.patterncount.stategraph import SequenceMap
+from module.patterncount import SequenceMap
 
 class TestStateGraph(unittest.TestCase):
 

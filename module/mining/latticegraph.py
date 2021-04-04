@@ -2,35 +2,41 @@
 # A Dag; storing parent child relationships; Level order traversal
 import json
 import itertools
+from ..utilities import print_fun
 from .latticenode import LatticeNode
+
+# File specific constants
+prune_types = ['parents', 'children']
 
 class LatticeGraph:
 
-    def __init__(self):
+    def __init__(self, num_of_dim: int):
         # Instantiates atleast first level, stores actual nodes in
-        # {depth: {dimension: parents, children }} mappings
+        # {depth: {dimension: latticenode_instance }} mappings
+        self._num_of_dim = num_of_dim
         self._nodes_by_level = {0: dict()}
+        self.num_of_nodes = 2 ** num_of_dim - 1
 
-    def get_node(self, depth: int, dimension: tuple) -> LatticeNode:
-        """Summary
-        Should be called after graph initialization
-        """
-        return self._nodes_by_level[depth][dimension]
+        # Initializing lattice graph
+        self._init_graph(num_of_dim)
+        message = 'Creating Lattice Graph of Nodes: ' + str(self.num_of_nodes)
+        print_fun(message)
 
-    def create_node(self, depth: int, dimension: tuple) -> None:
+    def _create_node(self, depth: int, dimension: tuple) -> None:
         """Summary
-        Creates node at a certain depth, with a certain dimension
+            creates node at a certain depth, with a certain dimension
         """
         self._nodes_by_level[depth][dimension] = LatticeNode(dimension)
 
-    def init_graph(self, num_of_dim: int) -> None:
+    def _init_graph(self, num_of_dim: int) -> None:
         """Summary
-        Creates all nodes and their interconnection in the graph
+            creates all nodes and their interconnection in the graph
         O(n^3): one loop for all levels; one for current level to update children
         ; and one loop for next level to update the parent
         Args:
             num_of_dim (int): Creates all subsets of number of dimension
         """
+
         level_queue = [tuple(range(num_of_dim))]
 
         # loop for all levels
@@ -43,7 +49,7 @@ class LatticeGraph:
 
                 # If node not already created by another superset
                 if parent not in self._nodes_by_level[depth]:
-                    self.create_node(depth, parent)
+                    self._create_node(depth, parent)
 
                 # Getting all children combinations for parent
                 children = list(itertools.combinations(parent, n))
@@ -63,7 +69,7 @@ class LatticeGraph:
 
                     # if child already created by another superset
                     if child not in self._nodes_by_level[depth + 1]:
-                        self.create_node(depth + 1, child)
+                        self._create_node(depth + 1, child)
 
                     # Add parent information in the children
                     self.get_node(depth + 1, child).add_parents([parent])
@@ -71,15 +77,27 @@ class LatticeGraph:
             # Switch queues for next level
             level_queue = temp_queue
 
-    def prune_nodes_recursively(self, depth: int, dimension: tuple, prune_type: str) -> int:
+    def get_node(self, depth: int, dimension: tuple) -> LatticeNode:
         """Summary
-        Prunes nodes recursively both sides either parents or children
+            should be called after graph initialization
+        """
+        return self._nodes_by_level[depth][dimension]
+
+    def get_graph(self) -> dict:
+        """Summary
+            method to expose lattice graph created
+        """
+        return self._nodes_by_level
+
+    def prune_nodes_recursively(self, depth: int, dimension: tuple,
+                                prune_type: str, num_of_pruned_nodes: int = 0) -> int:
+        """Summary
+            prunes nodes recursively both sides either parents or children
         Args:
             depth (int): depth at which node is located
             dimension (tuple): dimensions of the node
             prune_type (str): Parents or children
         """
-        num_of_pruned_nodes = 0
         lattice_node_inst = self.get_node(depth, dimension)
 
         if lattice_node_inst.is_node_pruned():
@@ -92,11 +110,11 @@ class LatticeGraph:
         # deciding where to on the basis of prune type
         next_depth = 0
         next_level_nodes = list()
-        if prune_type == 'parents':
+        if prune_type == prune_types[0]:
             next_depth = depth - 1
             next_level_nodes = lattice_node_inst.get_parents()
 
-        elif prune_type == 'children':
+        elif prune_type == prune_types[1]:
             next_depth = depth + 1
             next_level_nodes = lattice_node_inst.get_children()
 
@@ -106,13 +124,15 @@ class LatticeGraph:
         # Using DFS for the task
         for next_level_dimension in next_level_nodes:
             num_of_pruned_nodes += self.prune_nodes_recursively(
-                next_depth, next_level_dimension, prune_type)
+                next_depth, next_level_dimension, prune_type, num_of_pruned_nodes)
 
         return num_of_pruned_nodes
 
     def _get_graph_as_dict(self):
         """Summary
-        private method to convert graph to a recursive dictionary
+            private method to convert graph to a recursive dictionary
+        stringifying dimensions to beautify and print graphs as jsons (json does
+        not allow tuples as keys)
         """
         temp_dict = dict()
         for depth, dimension_dict in self._nodes_by_level.items():
@@ -120,19 +140,19 @@ class LatticeGraph:
             for dimension, latticenode in dimension_dict.items():
                 if not latticenode.is_node_pruned():
                     temp_dict[depth][str(dimension)] = {
-                        'parents': [str(x) for x in latticenode.get_parents()],
-                        'children': [str(x) for x in latticenode.get_children()]}
+                        prune_types[0]: [str(x) for x in latticenode.get_parents()],
+                        prune_types[1]: [str(x) for x in latticenode.get_children()]}
 
         return temp_dict
 
     def __str__(self):
         """Summary
-        returns graph as a string, excluding the pruned nodes
+            returns graph as a string, excluding the pruned nodes
         """
         return str(self._get_graph_as_dict())
 
     def beautify_print_graph(self) -> None:
         """Summary
-        prints graph with proper identations
+            prints graph with proper identations
         """
         print(json.dumps(self._get_graph_as_dict(), indent=4))
