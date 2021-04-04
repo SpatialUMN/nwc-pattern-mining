@@ -4,8 +4,9 @@ import pandas as pd
 from module.utilities import stringify_dataframe
 from module.patterncount.stategraph import SequenceMap
 from module.mining.candidatepattern import EnumeratedPattern
+from module.pattern_mining_client import format_output
 
-class TestEnumeratedPattern(unittest.TestCase):
+class TestPatternClient(unittest.TestCase):
 
     engrpm = np.array([2015, 1755, 1076, 2015, 1755, 1076, 2014, 1755, 1076])
     brkpw = np.array([660, 574, 158, 610, 574, 158, 660, 574, 158])
@@ -60,44 +61,37 @@ class TestEnumeratedPattern(unittest.TestCase):
     pattern_occurences = seqmap_inst.find_pattern_occurences(pattern_df)
     enum_patterns_inst.enumerate_pattern(pattern_str, pattern_occurences, lag)
 
-    def test_enumerate_pattern(self):
-        prep_metrics = [self.enum_patterns_inst._support[0],
-                        self.enum_patterns_inst._confidence[0],
-                        self.enum_patterns_inst._crossk[0]]
-        expected_metrics = [0.5556, 1.0, 2.5]
+    def test_format_output_threshold(self):
+        output_df = format_output(['engrpm', 'brkpw', 'nox'], self.enum_patterns_inst,
+                                  self.pattern_length, metric='crossk',
+                                  filter_type='threshold', threshold=2.5)
 
-        self.assertListEqual(prep_metrics, expected_metrics)
+        expected_df = pd.DataFrame({'engrpm': ['1755 1076', '1755 1076', ' '],
+                                    'brkpw': ['574 158', '574 158', '158 610'],
+                                    'nox': [' ', '48 27', ' '],
+                                    'Count': [3, 1, 1],
+                                    'Support': [0.5556, 0.2222, 0.2222],
+                                    'Kvalue': [2.5, 3.0, 3.0],
+                                    'Confidence': [1.0, 1.0, 1.0],
+                                    'Single Occurence Index': [1, 1, 2]})
 
-    def test_pattern_exists(self):
-        self.assertEqual(
-            self.enum_patterns_inst.find_pattern(self.test_pattern_str), 0)
+        self.assertDictEqual(output_df.to_dict(), expected_df.to_dict())
 
-    def test_get_pattern_indexes_topk(self):
-        prep_pattern_indexes = self.enum_patterns_inst.get_pattern_indexes(
-            metric='support', filter_type='topk', k=1)
-        self.assertListEqual(prep_pattern_indexes, [0])
+    def test_format_output_topk(self):
+        output_df = format_output(['engrpm', 'brkpw', 'nox'], self.enum_patterns_inst,
+                                  self.pattern_length, metric='support',
+                                  filter_type='topk', k=2)
 
-    def test_get_pattern_indexes_threshold(self):
-        prep_pattern_indexes = self.enum_patterns_inst.get_pattern_indexes(
-            metric='crossk', filter_type='threshold', threshold=2.7)
-        self.assertListEqual(prep_pattern_indexes, [1, 3])
+        expected_df = pd.DataFrame({'engrpm': ['1755 1076', ' '],
+                                    'brkpw': ['574 158', ' '],
+                                    'nox': [' ', '48 26'],
+                                    'Count': [3, 2],
+                                    'Support': [0.5556, 0.3333],
+                                    'Kvalue': [2.5, 2.25],
+                                    'Confidence': [1.0, 1.0],
+                                    'Single Occurence Index': [1, 4]})
 
-    def test_get_pattern_metrics(self):
-        prep_dict = self.enum_patterns_inst.get_pattern_metrics(
-            [0, 2, 4]).to_dict()
-        expected_dict = pd.DataFrame({'Count': [3, 2, 2], 'Support': [0.5556, 0.3333, 0.3333], 'Kvalue': [
-                                     2.5, 2.25, 2.25], 'Confidence': [1.0, 1.0, 1.0],
-            'Single Occurence Index': [1, 4, 4]}).to_dict()
-        self.assertDictEqual(prep_dict, expected_dict)
-
-    def test_get_patterns(self):
-        prep_patterns = self.enum_patterns_inst.get_patterns([0, 2])
-        self.assertListEqual(
-            prep_patterns, [self.test_pattern_str, self.test_pattern_str_2])
-
-    def test_is_above_threshold(self):
-        self.assertTrue(
-            self.enum_patterns_inst.is_above_threshold(0, 'crossk', 2.2))
+        self.assertDictEqual(output_df.to_dict(), expected_df.to_dict())
 
 
 if __name__ == '__main__':

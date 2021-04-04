@@ -127,7 +127,7 @@ class EnumeratedPattern:
 
         return metric_values[pattern_index] >= threshold
 
-    def get_pattern_indexes(self, metric: str, kind: str, k: int = -1,
+    def get_pattern_indexes(self, metric: str, filter_type: str, k: int = -1,
                             threshold: float = -1) -> list:
         """Summary
         Returns indexes of topK patterns or patterns above a threshold, depending upon metric
@@ -137,11 +137,11 @@ class EnumeratedPattern:
         metric_values = self._get_metric_values(metric)
         num_of_patterns = len(metric_values)
 
-        if kind == 'topk' and k != -1:
+        if filter_type == 'topk' and k != -1:
             pattern_indexes = sorted(
                 range(num_of_patterns), key=lambda i: metric_values[i], reverse=True)[:k]
 
-        elif kind == 'threshold' and threshold != -1:
+        elif filter_type == 'threshold' and threshold != -1:
             pattern_indexes = [i for i in range(
                 num_of_patterns) if metric_values[i] >= threshold]
 
