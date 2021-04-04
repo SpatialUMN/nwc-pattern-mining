@@ -1,9 +1,11 @@
 # Maintains a hashmap with single transitions for each attribute
 import sys
 import pandas as pd
-from ..utilities import print_fun
 
-class SequenceMap(object):
+from ..utilities import print_fun
+from .count_strategy import PatternCountStrategy
+
+class SequenceMap(PatternCountStrategy):
 
     def __init__(self, data: pd.DataFrame, nc_window_col_name: str):
         self._data = data
@@ -35,7 +37,7 @@ class SequenceMap(object):
             size_of_map) + ' MB'
         print_fun(message)
 
-    def find_pattern_occurences(self, pattern_df: pd.DataFrame) -> int:
+    def find_pattern_occurences(self, pattern_df: pd.DataFrame) -> list:
         """Summary
             Finds pattern occurences in the data
         """
