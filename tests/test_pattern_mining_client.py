@@ -27,7 +27,8 @@ class TestPatternClient(unittest.TestCase):
     # Instantiating Enumeration of patterns
     num_of_readings = 9
     anomalous_windows = engine_data.index[engine_data.ncwindow == 1].tolist()
-    enum_patterns_inst = EnumeratedPattern(anomalous_windows, num_of_readings)
+    enum_patterns_inst = EnumeratedPattern(
+        anomalous_windows, num_of_readings, 'crossk', 2.2)
 
     # Enumerating patterns
     lag = 1

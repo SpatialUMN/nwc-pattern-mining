@@ -5,21 +5,28 @@ import numpy as np
 import pandas as pd
 
 # Specific constants
+metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
                     'Confidence', 'Single Occurence Index']
 
 class EnumeratedPattern:
 
-    def __init__(self, anomalous_windows: list, num_of_readings: int):
+    def __init__(self, anomalous_windows: list, num_of_readings: int,
+                 threshold_metric: str, threshold_value: float) -> None:
         """Summary
         patterns: to store already visited patterns (serialised dataframe segments)
-        occurences: all positions of each dataframe segment
+        occurences: all positions of each pattern sequence
         features: dimensions involved in the dataframe segment
         support, confidence, crossk: support of the enumerated patterns
         anomalous_windows (list): occurences of anomalous windows
         """
+        if threshold_metric not in metric_names:
+            raise Exception('Wrong metric provided for threshold')
+
         self._num_of_readings = num_of_readings
         self._anomalous_windows = anomalous_windows
+        self._threshold_metric = threshold_metric
+        self._threshold_value = threshold_value
         self._crossk_const = num_of_readings / len(anomalous_windows)
         self._patterns = list()
         self._occurences = list()
@@ -29,6 +36,7 @@ class EnumeratedPattern:
         self._support = list()
         self._confidence = list()
         self._crossk = list()
+        self._is_above_threshold = list()
 
     def enumerate_pattern(self, pattern_str: str, pattern_occurences: int,
                           lag: int) -> None:
@@ -44,20 +52,25 @@ class EnumeratedPattern:
         # Add pattern to enumeration list
         self._patterns.append(pattern_str)
 
-        self.fill_pattern_counts(pattern_occurences)
+        self._fill_pattern_counts(pattern_occurences)
 
-        self.fill_pattern_joinsets(pattern_occurences, lag)
+        self._fill_pattern_joinsets(pattern_occurences, lag)
 
-        self.fill_pattern_metrics()
+        self._fill_pattern_metrics()
 
-    def fill_pattern_counts(self, pattern_occurences: list) -> None:
+        # check if recently added pattern above threshold
+        metric_values = self._get_metric_values(self._threshold_metric)
+        self._is_above_threshold.append(
+            metric_values[-1] >= self._threshold_value)
+
+    def _fill_pattern_counts(self, pattern_occurences: list) -> None:
         """Summary
         Fills all fields that are directly derivable for the pattern
         """
         self._occurences.append(pattern_occurences)
         self._patterncount.append(len(pattern_occurences))
 
-    def fill_pattern_joinsets(self, pattern_occurences: list, lag: int) -> None:
+    def _fill_pattern_joinsets(self, pattern_occurences: list, lag: int) -> None:
         """Summary
         Fill joinset cardinalities of pattern occurence w.r.t anomalous windows
         """
@@ -77,7 +90,7 @@ class EnumeratedPattern:
         self._joinset_cardinality.append(joinset_count)
         self._unique_joinset_cardinality.append(unique_joinset_count)
 
-    def fill_pattern_metrics(self) -> None:
+    def _fill_pattern_metrics(self) -> None:
         """Summary
         Calculates various metrics for the patterns, like support, confidence, crossk
         """
@@ -91,15 +104,6 @@ class EnumeratedPattern:
 
         crossk_var = joinset_count / patterncount
         self._crossk.append(round(self._crossk_const * crossk_var, 4))
-
-    def find_pattern(self, pattern_str: str) -> int:
-        """Summary
-        returns index of enumerated pattern
-        """
-        if pattern_str in self._patterns:
-            return self._patterns.index(pattern_str)
-
-        return -1
 
     def _get_metric_values(self, metric: str) -> list:
         """Summary
@@ -118,14 +122,20 @@ class EnumeratedPattern:
 
         return metric_values
 
-    def is_above_threshold(self, pattern_index: int, metric: str,
-                           threshold: float) -> bool:
+    def is_above_threshold(self, pattern_index: int) -> bool:
         """Summary
         returns pattern at a specific index to be above threshold or not
         """
-        metric_values = self._get_metric_values(metric)
+        return self._is_above_threshold[pattern_index]
 
-        return metric_values[pattern_index] >= threshold
+    def find_pattern(self, pattern_str: str) -> int:
+        """Summary
+        returns index of enumerated pattern
+        """
+        if pattern_str in self._patterns:
+            return self._patterns.index(pattern_str)
+
+        return -1
 
     def get_pattern_indexes(self, metric: str, filter_type: str, k: int = -1,
                             threshold: float = -1) -> list:
