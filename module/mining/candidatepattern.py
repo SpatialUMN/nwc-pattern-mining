@@ -10,7 +10,7 @@ from ..utilities import print_fun
 patterns_alert_threshold = 1000
 metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
-                    'Confidence', 'Single Occurence Index']
+                    'Confidence', 'SOI']
 
 class EnumeratedPattern:
 
@@ -37,6 +37,15 @@ class EnumeratedPattern:
         self._support = list()
         self._confidence = list()
         self._crossk = list()
+
+    def get_lag(self):
+        return self._lag
+
+    def get_anomalous_windows(self):
+        return self._anomalous_windows
+
+    def get_num_of_readings(self):
+        return self._num_of_readings
 
     def enumerate_pattern(self, pattern_str: str, pattern_occurences: int) -> None:
         """Summary
@@ -187,4 +196,4 @@ class EnumeratedPattern:
         size_of_inst = sys.getsizeof(self) / 1000000
         desc = 'Number of patterns enumerated: {0} | Memory size: {1} MB'
 
-        return desc.format(len(self._num_of_patterns, size_of_inst))
+        return desc.format(self._num_of_patterns, size_of_inst)

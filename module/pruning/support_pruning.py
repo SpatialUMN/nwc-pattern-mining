@@ -13,7 +13,7 @@ threshold_metric = 'support'
 
 class SupportPruning(PruningStrategy):
 
-    def __init__(self, num_of_dim: int, data: pd.DataFrame,
+    def __init__(self, num_of_dims: int, data: pd.DataFrame,
                  enum_pattern_inst: EnumeratedPattern,
                  pattern_count_inst: PatternCountStrategy,
                  threshold_value: float) -> None:
@@ -21,17 +21,10 @@ class SupportPruning(PruningStrategy):
         self._data = data
         self._threshold_value = threshold_value
         self._enum_pattern_inst = enum_pattern_inst
-        self._lattice_graph_inst = LatticeGraph(num_of_dim)
+        self._lattice_graph_inst = LatticeGraph(num_of_dims)
         self._pattern_count_inst = pattern_count_inst
 
-    def _reconstruct_pattern_df(self, start_index: int, end_index: int,
-                                column_indexes: list) -> pd.DataFrame:
-        """Summary
-            uses information provided as arguments to slice and index specific parts of dataframe
-        """
-        return self._data[self._data.columns[column_indexes]].iloc[start_index: end_index]
-
-    def prune_patterns(self, start_index: int, end_index: int) -> list:
+    def prune_and_enumerate_patterns(self, start_index: int, end_index: int) -> list:
         """Summary
             finds pattern occurences in the data, some findings below:
             1. If a pattern is enumerated, means it's parents are also enumerated
@@ -54,7 +47,7 @@ class SupportPruning(PruningStrategy):
                     continue
 
                 # b. would need to reconstruct the pattern dataframe from indexes, to enumerate
-                pattern_df = self._reconstruct_pattern_df(
+                pattern_df = super()._reconstruct_pattern_df(
                     start_index, end_index, list(node_dimensions))
 
                 # c. check if pattern already enumerated, if not then enumerate
@@ -66,6 +59,11 @@ class SupportPruning(PruningStrategy):
                     # finding pattern occurences
                     pattern_occurences = self._pattern_count_inst.find_pattern_occurences(
                         pattern_df)
+
+                    # Debugging (to be removed)
+                    if len(pattern_occurences) == 0:
+                        print(pattern_df)
+                        raise Exception('Debugging for Zero pattern count')
 
                     # pattern enumeration (counting cooccurences and other metrics)
                     self._enum_pattern_inst.enumerate_pattern(

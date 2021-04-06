@@ -18,6 +18,18 @@ def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
     """Summary
     Main function / interface for the package
     """
+    # # Calculates total possible patterns
+    # total_valid_seq = (len(self._anomalous_windows) *
+    #                    len(self._lag) - len(invalid_seq_indexes))
+    # self._total_possible_patterns = len(self._anomalous_windows)
+
+    # message = 'Processing Anomalous Windows'
+    # print_fun(message, status='step')
+
+    # message = 'Completed Mining, saved Enumeration for Patterns: {0} / {1}'
+    # print_fun(message.format(saved_enumerations,
+    #                          self._total_possible_patterns))
+    # print_fun(self._enum_pattern_inst)
     pass
 
 
