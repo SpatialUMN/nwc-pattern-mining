@@ -60,7 +60,7 @@ class PatternMiner:
 
     def _is_valid_seq(self, start_idx: int, end_idx: int) -> bool:
         """Summary
-            Determines if current sequence is: 
+            Determines if current sequence is:
             1. Already visited
             2. Out of bounds
             3. Across any of violated indexes

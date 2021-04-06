@@ -3,41 +3,78 @@ API end point to read input, delegate mining by creating strategies, and finally
 formats patterns identified in a specific format
 """
 import pandas as pd
+
 from .utilities import print_fun
+from .pruning import SupportPruning
 from .mining import EnumeratedPattern
+from .patterncount import SequenceMap
+from .patternminer import PatternMiner
 
 # Specific constants
 dummy_col_name = 'dummy'
 dummy_col_value = 'NA'
+support_output_metrics = ['crossk', 'support']
+supported_output_types = ['threshold', 'topk']
 
 
 def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
                            support_threshold: float, crossk_threshold: float,
                            pattern_length: int, confidence_threshold: float = -1,
-                           lag: int = 0, invalid_seq_indexes: list = []) -> pd.DataFrame:
+                           lag: int = 0, invalid_seq_indexes: list = [],
+                           output_metric: str = 'crossk',
+                           output_type: str = 'threshold',
+                           topk: int = 100) -> pd.DataFrame:
     """Summary
-    Main function / interface for the package
+        Main function / interface for the package (Driver function)
     """
-    # # Calculates total possible patterns
-    # total_valid_seq = (len(self._anomalous_windows) *
-    #                    len(self._lag) - len(invalid_seq_indexes))
-    # self._total_possible_patterns = len(self._anomalous_windows)
+    # Creating concrete strategy for counting patterns
+    message = 'Counting pattern occurences'
+    print_fun(message, status='step')
+    seqmap_inst = SequenceMap(series_df, nc_window_col)
+    seqmap_inst.init_seq_map(pattern_length)
 
-    # message = 'Processing Anomalous Windows'
-    # print_fun(message, status='step')
+    # Instantiating instance for pattern enumeration
+    num_of_readings = len(series_df)
+    anomalous_windows = series_df.index[series_df[nc_window_col] == 1].tolist()
+    enum_patterns_inst = EnumeratedPattern(
+        anomalous_windows, num_of_readings, lag)
 
-    # message = 'Completed Mining, saved Enumeration for Patterns: {0} / {1}'
-    # print_fun(message.format(saved_enumerations,
-    #                          self._total_possible_patterns))
-    # print_fun(self._enum_pattern_inst)
-    pass
+    # Instantiate concrete strategy for pruning
+    num_of_dims = series_df.shape[1] - 1
+    pruning_inst = SupportPruning(
+        num_of_dims, series_df, enum_patterns_inst, seqmap_inst, support_threshold)
+
+    # Instantiate miner instance
+    message = 'Processing Anomalous Windows'
+    print_fun(message, status='step')
+
+    patternminer_inst = PatternMiner(
+        pattern_length, num_of_dims, invalid_seq_indexes, enum_patterns_inst, pruning_inst)
+    patternminer_inst.mine()
+
+    # Preparing final output
+    patterns_mined_df = pd.DataFrame()
+    col_names = series_df.columns[series_df.columns != nc_window_col].tolist()
+    output_threshold = crossk_threshold if output_metric == support_output_metrics[
+        0] else support_threshold
+
+    if output_type == supported_output_types[0]:
+        patterns_mined_df = format_output(col_names, enum_patterns_inst,
+                                          pattern_length, output_metric, output_type,
+                                          threshold=output_threshold)
+    else:
+        patterns_mined_df = format_output(col_names, enum_patterns_inst,
+                                          pattern_length, output_metric, output_type,
+                                          k=topk)
+
+    return patterns_mined_df
 
 
 def format_output(col_names: list, enum_pattern_inst: EnumeratedPattern,
                   pattern_length: int, metric: str, filter_type: str, k: int = -1,
                   threshold: float = -1) -> pd.DataFrame:
     """Summary
-    Retuns patterns and associated metrics as a dataframe
+        Retuns patterns and associated metrics as a dataframe
     Args:
         pattern_length (int): Fixed pattern length
         metric (str): Type of metric to filter patterns upon
@@ -45,8 +82,8 @@ def format_output(col_names: list, enum_pattern_inst: EnumeratedPattern,
         k (int, optional): K if filter_type=topk
         threshold (float, optional): threshold value if filter_type=threshold
     """
-    message = 'Formatting Enumerated Patterns as Output via: ({0})'.format(
-        filter_type)
+    message = 'Formatting Enumerated Patterns ({0}) as Output via: ({1})'.format(
+        enum_pattern_inst.num_of_patterns, filter_type)
     print_fun(message, status='step')
 
     pattern_indexes = enum_pattern_inst.get_pattern_indexes(
@@ -65,7 +102,7 @@ def format_output(col_names: list, enum_pattern_inst: EnumeratedPattern,
 def convert_patterns_to_df(patterns_list: list, col_names: list,
                            pattern_length: int) -> pd.DataFrame:
     """Summary
-    Convert list of jsons into a dataframe of patterns
+        Convert list of jsons into a dataframe of patterns
     Args:
         col_names (list): list of column names for attributes
         patterns_list (list): list of all patterns enumerated, as jsons

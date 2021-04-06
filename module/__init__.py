@@ -1,0 +1,1 @@
+from .pattern_mining_client import mine_sequence_patterns

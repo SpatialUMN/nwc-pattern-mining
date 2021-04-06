@@ -7,10 +7,10 @@ import pandas as pd
 from ..utilities import print_fun
 
 # Specific constants
-patterns_alert_threshold = 1000
+patterns_alert_threshold = 10000
 metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
-                    'Confidence', 'SOI']
+                    'Confidence', 'Single Occurence Index']
 
 class EnumeratedPattern:
 
@@ -28,7 +28,7 @@ class EnumeratedPattern:
         self._anomalous_windows = anomalous_windows
         self._crossk_const = num_of_readings / len(anomalous_windows)
 
-        self._num_of_patterns = 0
+        self.num_of_patterns = 0
         self._patterns = list()
         self._occurences = list()
         self._patterncount = list()
@@ -67,8 +67,8 @@ class EnumeratedPattern:
         self._fill_pattern_metrics()
 
         # Monitoring memory size of instance
-        self._num_of_patterns += 1
-        if self._num_of_patterns % patterns_alert_threshold == 0:
+        self.num_of_patterns += 1
+        if self.num_of_patterns % patterns_alert_threshold == 0:
             print_fun(self)
 
     def _fill_pattern_counts(self, pattern_occurences: list) -> None:
@@ -176,7 +176,7 @@ class EnumeratedPattern:
         """Summary
             returns list of patterns as strings, through list of indexes provided
         """
-        return [self._patterns[i] for i in range(self._num_of_patterns) if i in pattern_indexes]
+        return [self._patterns[i] for i in range(self.num_of_patterns) if i in pattern_indexes]
 
     def get_pattern_metrics(self, pattern_indexes: list) -> pd.DataFrame:
         """Summary
@@ -193,7 +193,7 @@ class EnumeratedPattern:
                              metric_col_names[4]: pattern_occurences})
 
     def __str__(self):
-        size_of_inst = sys.getsizeof(self) / 1000000
+        size_of_patterns = sys.getsizeof(self._patterns) / 1000000
         desc = 'Number of patterns enumerated: {0} | Memory size: {1} MB'
 
-        return desc.format(self._num_of_patterns, size_of_inst)
+        return desc.format(self.num_of_patterns, size_of_patterns)
