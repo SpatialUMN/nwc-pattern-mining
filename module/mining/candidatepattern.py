@@ -37,6 +37,7 @@ class EnumeratedPattern:
         self._support = list()
         self._confidence = list()
         self._crossk = list()
+        self._above_some_threshold = list()
 
     def get_lag(self):
         return self._lag
@@ -59,6 +60,9 @@ class EnumeratedPattern:
 
         # Add pattern to enumeration list
         self._patterns.append(pattern_str)
+
+        # Would be later changed when checking for threshold
+        self._above_some_threshold.append(True)
 
         self._fill_pattern_counts(pattern_occurences)
 
@@ -107,11 +111,11 @@ class EnumeratedPattern:
         joinset_count = self._joinset_cardinality[-1]
         unique_joinset_count = self._unique_joinset_cardinality[-1]
 
-        self._confidence.append(round(unique_joinset_count / patterncount, 4))
-        self._support.append(round(joinset_count / self._num_of_readings, 4))
+        self._confidence.append(unique_joinset_count / patterncount)
+        self._support.append(joinset_count / self._num_of_readings)
 
         crossk_var = joinset_count / patterncount
-        self._crossk.append(round(self._crossk_const * crossk_var, 4))
+        self._crossk.append(self._crossk_const * crossk_var)
 
     def _get_metric_values(self, metric: str) -> list:
         """Summary
@@ -136,8 +140,12 @@ class EnumeratedPattern:
             returns pattern at a specific index to be above threshold or not
         """
         metric_values = self._get_metric_values(threshold_metric)
+        bool_result = metric_values[pattern_index] >= threshold_value
 
-        return metric_values[pattern_index] >= threshold_value
+        # Set for records of the pattern
+        self._above_some_threshold[pattern_index] = bool_result
+
+        return bool_result
 
     def find_pattern(self, pattern_str: str) -> int:
         """Summary
@@ -158,14 +166,17 @@ class EnumeratedPattern:
         metric_values = self._get_metric_values(metric)
         num_of_patterns = len(metric_values)
 
+        # Get only valid indexes
+        indexes_above_threshold = [x for x in range(
+            num_of_patterns) if self._above_some_threshold[x]]
+
         if filter_type == 'topk' and k != -1:
             pattern_indexes = sorted(
-                range(num_of_patterns), key=lambda i: metric_values[i], reverse=True)[:k]
+                indexes_above_threshold, key=lambda i: metric_values[i], reverse=True)[:k]
 
         elif filter_type == 'threshold' and threshold != -1:
-            pattern_indexes = [i for i in range(
-                num_of_patterns) if metric_values[i] >= threshold]
-
+            pattern_indexes = [i for i in indexes_above_threshold
+                               if metric_values[i] >= threshold]
         else:
             raise Exception(
                 'Insufficient / wrong parameters for finding pattern indexes')
@@ -176,7 +187,7 @@ class EnumeratedPattern:
         """Summary
             returns list of patterns as strings, through list of indexes provided
         """
-        return [self._patterns[i] for i in range(self.num_of_patterns) if i in pattern_indexes]
+        return np.array(self._patterns)[pattern_indexes].tolist()
 
     def get_pattern_metrics(self, pattern_indexes: list) -> pd.DataFrame:
         """Summary
@@ -184,8 +195,8 @@ class EnumeratedPattern:
         in a structure format (only returning index of the first occurence)
         """
         # manual indexing due to length of pattern occurences being irregular
-        pattern_occurences = [x[0] for i, x in enumerate(
-            self._occurences) if i in pattern_indexes]
+        pattern_occurences = [x[0] for x in
+                              np.array(self._occurences, dtype=object)[pattern_indexes]]
         return pd.DataFrame({metric_col_names[0]: np.array(self._patterncount)[pattern_indexes],
                              metric_col_names[1]: np.array(self._support)[pattern_indexes],
                              metric_col_names[2]: np.array(self._crossk)[pattern_indexes],

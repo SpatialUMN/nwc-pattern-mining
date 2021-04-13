@@ -71,7 +71,9 @@ class TestPatternClient(unittest.TestCase):
                                     'brkpw': ['574 158', '574 158', '158 610'],
                                     'nox': [' ', '48 27', ' '],
                                     'Count': [3, 1, 1],
-                                    'Support': [0.5556, 0.2222, 0.2222],
+                                    'Support': [0.5555555555555556,
+                                                0.2222222222222222,
+                                                0.2222222222222222],
                                     'Kvalue': [2.5, 3.0, 3.0],
                                     'Confidence': [1.0, 1.0, 1.0],
                                     'Single Occurence Index': [1, 1, 2]})
@@ -87,7 +89,8 @@ class TestPatternClient(unittest.TestCase):
                                     'brkpw': ['574 158', ' '],
                                     'nox': [' ', '48 26'],
                                     'Count': [3, 2],
-                                    'Support': [0.5556, 0.3333],
+                                    'Support': [0.5555555555555556,
+                                                0.3333333333333333],
                                     'Kvalue': [2.5, 2.25],
                                     'Confidence': [1.0, 1.0],
                                     'Single Occurence Index': [1, 4]})

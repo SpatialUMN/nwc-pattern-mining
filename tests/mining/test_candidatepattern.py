@@ -65,7 +65,7 @@ class TestEnumeratedPattern(unittest.TestCase):
         prep_metrics = [self.enum_patterns_inst._support[0],
                         self.enum_patterns_inst._confidence[0],
                         self.enum_patterns_inst._crossk[0]]
-        expected_metrics = [0.5556, 1.0, 2.5]
+        expected_metrics = [0.5555555555555556, 1.0, 2.5]
 
         self.assertListEqual(prep_metrics, expected_metrics)
 
@@ -87,7 +87,9 @@ class TestEnumeratedPattern(unittest.TestCase):
         prep_dict = self.enum_patterns_inst.get_pattern_metrics(
             [0, 2, 4]).to_dict()
         expected_dict = pd.DataFrame({'Count': [3, 2, 2],
-                                      'Support': [0.5556, 0.3333, 0.3333],
+                                      'Support': [0.5555555555555556,
+                                                  0.3333333333333333,
+                                                  0.3333333333333333],
                                       'Kvalue': [2.5, 2.25, 2.25],
                                       'Confidence': [1.0, 1.0, 1.0],
                                       'Single Occurence Index': [1, 4, 4]}).to_dict()

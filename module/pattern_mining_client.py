@@ -23,6 +23,7 @@ def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
                            lag: int = 0, invalid_seq_indexes: list = [],
                            output_metric: str = 'crossk',
                            output_type: str = 'threshold',
+                           output_threshold: float = -1,
                            topk: int = 100) -> pd.DataFrame:
     """Summary
         Main function / interface for the package (Driver function)
@@ -55,17 +56,10 @@ def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
     # Preparing final output
     patterns_mined_df = pd.DataFrame()
     col_names = series_df.columns[series_df.columns != nc_window_col].tolist()
-    output_threshold = crossk_threshold if output_metric == support_output_metrics[
-        0] else support_threshold
 
-    if output_type == supported_output_types[0]:
-        patterns_mined_df = format_output(col_names, enum_patterns_inst,
-                                          pattern_length, output_metric, output_type,
-                                          threshold=output_threshold)
-    else:
-        patterns_mined_df = format_output(col_names, enum_patterns_inst,
-                                          pattern_length, output_metric, output_type,
-                                          k=topk)
+    patterns_mined_df = format_output(col_names, enum_patterns_inst,
+                                      pattern_length, output_metric, output_type,
+                                      k=topk, threshold=output_threshold)
 
     return patterns_mined_df
 

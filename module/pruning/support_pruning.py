@@ -75,9 +75,9 @@ class SupportPruning(PruningStrategy):
 
                 # d. Now that pattern is enumerated, we have threshold information about it
                 # two conditions for pruning parent patterns (hashing and apriori)
-                if pattern_index != -1 or not self._enum_pattern_inst.is_above_threshold(pattern_index,
-                                                                                         threshold_metric,
-                                                                                         self._threshold_value):
+                if not self._enum_pattern_inst.is_above_threshold(pattern_index,
+                                                                  threshold_metric,
+                                                                  self._threshold_value):
                     # pruning all parents if node not above
                     clone_lattice_graph_inst.prune_nodes_recursively(
                         level, node_dimensions, prune_type)
