@@ -7,6 +7,7 @@ import pandas as pd
 from ..utilities import print_fun
 
 # Specific constants
+short_window_bin_size = 100
 patterns_alert_threshold = 10000
 metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
@@ -38,6 +39,10 @@ class EnumeratedPattern:
         self._confidence = list()
         self._crossk = list()
         self._above_some_threshold = list()
+        self._anomalous_windows_map = dict()
+
+        # break anomalous windows for range queries
+        self._create_short_anomalous_windows()
 
     def get_lag(self):
         return self._lag
@@ -47,6 +52,24 @@ class EnumeratedPattern:
 
     def get_num_of_readings(self):
         return self._num_of_readings
+
+    def _create_short_anomalous_windows(self) -> dict:
+        # Create a hashmap to shorten and store anomalous windows
+        for i in self._anomalous_windows:
+            key = i // short_window_bin_size
+            if key not in self._anomalous_windows_map:
+                self._anomalous_windows_map[key] = list()
+
+            self._anomalous_windows_map[key].append(i)
+
+    def _get_short_anomalous_windows(self, index) -> list:
+        # Only get anomalous windows of length 100, to make search faster
+        key = index // short_window_bin_size
+
+        if key not in self._anomalous_windows_map:
+            key += 1
+
+        return self._anomalous_windows_map[key]
 
     def enumerate_pattern(self, pattern_str: str, pattern_occurences: int) -> None:
         """Summary
@@ -92,8 +115,15 @@ class EnumeratedPattern:
         # Finds cooccurences of pattern and anomalous windows
         for index in pattern_occurences:
             temp_list = list(range(index, index + self._lag + 1))
+            start_windows = self._get_short_anomalous_windows(
+                index)
+            end_windows = self._get_short_anomalous_windows(
+                index + self._lag + 1)
+            shorter_anomalous_windows = list(set(start_windows + end_windows))
+
+            # getting intersections for join cardinality counts
             num_of_intersections = len(
-                set(temp_list).intersection(self._anomalous_windows))
+                set(temp_list).intersection(shorter_anomalous_windows))
 
             if num_of_intersections > 0:
                 joinset_count += num_of_intersections

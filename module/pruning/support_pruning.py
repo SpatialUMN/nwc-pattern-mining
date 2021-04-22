@@ -35,10 +35,13 @@ class SupportPruning(PruningStrategy):
         # avoid creation of lattice graph, again and again
         clone_lattice_graph_inst = copy.deepcopy(self._lattice_graph_inst)
 
+        nodes_enumerated = 0
         nodes_not_enumerated = 0
         lattice_graph = clone_lattice_graph_inst.get_graph()
 
         for level, nodes_per_level in sorted(lattice_graph.items(), reverse=True):
+            entire_level_pruned = True
+
             for node_dimensions, latticenode_inst in nodes_per_level.items():
 
                 # a. check if node is pruned, if yes, move to next node
@@ -69,6 +72,9 @@ class SupportPruning(PruningStrategy):
                     self._enum_pattern_inst.enumerate_pattern(
                         pattern_str, pattern_occurences)
 
+                    # Counting nodes enumerated
+                    nodes_enumerated += 1
+
                 else:
                     # just to count node that does not need to be enumerated due to hashing
                     nodes_not_enumerated += 1
@@ -81,5 +87,10 @@ class SupportPruning(PruningStrategy):
                     # pruning all parents if node not above
                     clone_lattice_graph_inst.prune_nodes_recursively(
                         level, node_dimensions, prune_type)
+                else:
+                    entire_level_pruned = False
+
+            if entire_level_pruned:
+                return clone_lattice_graph_inst.num_of_nodes - nodes_enumerated
 
         return nodes_not_enumerated
