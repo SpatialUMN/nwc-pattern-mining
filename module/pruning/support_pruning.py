@@ -63,11 +63,6 @@ class SupportPruning(PruningStrategy):
                     pattern_occurences = self._pattern_count_inst.find_pattern_occurences(
                         pattern_df)
 
-                    # Debugging (to be removed)
-                    if len(pattern_occurences) == 0:
-                        print(pattern_df)
-                        raise Exception('Debugging for Zero pattern count')
-
                     # pattern enumeration (counting cooccurences and other metrics)
                     self._enum_pattern_inst.enumerate_pattern(
                         pattern_str, pattern_occurences)

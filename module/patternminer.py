@@ -38,8 +38,6 @@ class PatternMiner:
         for window_index in tqdm(self._anomalous_windows):
             for current_lag_val in range(self._lag, -1, -1):
 
-                from time import time
-
                 # formulating patterns by defining indexes
                 start_pattern_index = window_index - current_lag_val
                 end_pattern_index = start_pattern_index + self._pattern_length
@@ -51,13 +49,9 @@ class PatternMiner:
                     self._visited_indexes.append(
                         (start_pattern_index, end_pattern_index))
 
-                    # start = time()
                     # Prune and enumerate patterns
                     saved_enumerations += self._pruning_inst.prune_and_enumerate_patterns(
                         start_pattern_index, end_pattern_index)
-                    # end = time()
-                    # print(f'One pattern Enumeration: {end - start} seconds!')
-                    # asdf
 
         # Calculating computations saved
         total_patterns = valid_seq_count * (2 ** self._num_of_dims - 1)

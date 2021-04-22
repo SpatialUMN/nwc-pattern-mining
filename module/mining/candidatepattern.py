@@ -7,7 +7,7 @@ import pandas as pd
 from ..utilities import print_fun
 
 # Specific constants
-short_window_bin_size = 100
+short_window_bin_size = 50
 patterns_alert_threshold = 10000
 metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
