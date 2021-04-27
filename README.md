@@ -8,21 +8,21 @@ Non-compliant Window Co-occurrence pattern mining in temporal data
 - The algorithm is based on research: (Discovering non-compliant window co-occurrence patterns)[https://link.springer.com/article/10.1007/s10707-016-0289-3]
 
 # API-description:
-`from nwc_pattern_mining.module import mine_sequence_patterns`
+`from nwc_pattern_miner import mine_sequence_patterns`
 
 ## API Parameters: 
-- `series_df: pd.DataFrame`; Input DataFrame (Only features [discretized] and Target [binarized] columns)  
-- `nc_window_col: str`; Column Name with Binary Target (Anomalous Windows)
-- `support_threshold: float`; Support threshold for sequence co-occurrence patterns
-- `crossk_threshold: float`; Ripley's Cross-k threshold for sequence co-occurrence patterns
-- `pattern_length: int`; length of feature sequences co-occurring with anomalous windows
-- `confidence_threshold: float, default=-1`; Confidence threshold for sequence co-occurrence patterns
-- `lag: int, default= 0`; lag consideration between sequence patterns and anomalous windows
-- `invalid_seq_indexes: list, default=[]`; list of indexes across which sequence patterns would be invalidated
-- `output_metric: {'crossk', 'support'}, default='crossk'`; Metric used to sort patterns mined
-- `output_type: {'topk', 'threshold'}, default='topk';` Type of output for sequence patterns mined
-- `output_threshold: float, default= -1`; Threshold cutoff used to get output sequence patterns, if `output_type='threshold'`
-- `topk: int, default=100`; Top-k sequence patterns obtained based on `output_metric`, if `output_type='topk'`
+- **series_df**: `pd.DataFrame`; Input DataFrame (Only features [discretized] and Target [binarized] columns)  
+- **nc_window_col**: `str`; Column Name with Binary Target (Anomalous Windows)
+- **support_threshold**: `float`; Support threshold for sequence co-occurrence patterns
+- **crossk_threshold**: `float`; Ripley's Cross-k threshold for sequence co-occurrence patterns
+- **pattern_length**: `int`; length of feature sequences co-occurring with anomalous windows
+- **confidence_threshold**: `float, default=-1`; Confidence threshold for sequence co-occurrence patterns
+- **lag**: `int, default= 0`; lag consideration between sequence patterns and anomalous windows
+- **invalid_seq_indexes**: `list, default=list()`; list of indexes across which sequence patterns would be invalidated
+- **output_metric**: `{'crossk', 'support'}, default='crossk'`; Metric used to sort patterns mined
+- **output_type**: `{'topk', 'threshold'}, default='topk';` Type of output for sequence patterns mined
+- **output_threshold**: `float, default= -1`; Threshold cutoff used to get output sequence patterns, if `output_type='threshold'`
+- **topk**: `int, default=100`; Top-k sequence patterns obtained based on `output_metric`, if `output_type='topk'`
 
 ## Sample Input DataFrame:
 | engrpm      | EGRkgph     | MSPhum      | EngTq       | NCWindow    |
