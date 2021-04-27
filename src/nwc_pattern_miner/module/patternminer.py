@@ -25,7 +25,7 @@ class PatternMiner:
         self._num_of_readings = enum_pattern_inst.get_num_of_readings()
         self._anomalous_windows = enum_pattern_inst.get_anomalous_windows()
 
-        self._visited_indexes = list()
+        self._visited_indexes = set()
 
     def mine(self) -> None:
         """Summary
@@ -46,7 +46,7 @@ class PatternMiner:
                     valid_seq_count += 1
 
                     # Adding indexes to visited
-                    self._visited_indexes.append(
+                    self._visited_indexes.add(
                         (start_pattern_index, end_pattern_index))
 
                     # Prune and enumerate patterns

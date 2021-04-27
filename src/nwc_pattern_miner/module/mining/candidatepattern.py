@@ -5,13 +5,14 @@ import sys
 import numpy as np
 import pandas as pd
 from ..utilities import print_fun
+from collections import OrderedDict
 
 # Specific constants
 short_window_bin_size = 50
 patterns_alert_threshold = 10000
 metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
-                    'Confidence', 'Single Occurence Index']
+                    'Confidence', 'First Occurrence Index']
 
 class EnumeratedPattern:
 
@@ -30,7 +31,7 @@ class EnumeratedPattern:
         self._crossk_const = num_of_readings / len(anomalous_windows)
 
         self.num_of_patterns = 0
-        self._patterns = list()
+        self._patterns = OrderedDict()
         self._occurences = list()
         self._patterncount = list()
         self._joinset_cardinality = list()
@@ -82,7 +83,8 @@ class EnumeratedPattern:
             return
 
         # Add pattern to enumeration list
-        self._patterns.append(pattern_str)
+        # self._patterns.append(pattern_str)
+        self._patterns[pattern_str] = self.num_of_patterns
 
         # Would be later changed when checking for threshold
         self._above_some_threshold.append(True)
@@ -182,7 +184,8 @@ class EnumeratedPattern:
             returns index of enumerated pattern
         """
         if pattern_str in self._patterns:
-            return self._patterns.index(pattern_str)
+            # return self._patterns.index(pattern_str)
+            return self._patterns[pattern_str]
 
         return -1
 
@@ -217,7 +220,7 @@ class EnumeratedPattern:
         """Summary
             returns list of patterns as strings, through list of indexes provided
         """
-        return np.array(self._patterns)[pattern_indexes].tolist()
+        return np.array(list(self._patterns.keys()))[pattern_indexes].tolist()
 
     def get_pattern_metrics(self, pattern_indexes: list) -> pd.DataFrame:
         """Summary
