@@ -92,7 +92,7 @@ class TestEnumeratedPattern(unittest.TestCase):
                                                   0.3333333333333333],
                                       'Kvalue': [2.5, 2.25, 2.25],
                                       'Confidence': [1.0, 1.0, 1.0],
-                                      'Single Occurence Index': [1, 4, 4]}).to_dict()
+                                      'First Occurrence Index': [1, 4, 4]}).to_dict()
         self.assertDictEqual(prep_dict, expected_dict)
 
     def test_get_patterns(self):

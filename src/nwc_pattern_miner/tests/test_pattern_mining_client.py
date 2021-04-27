@@ -76,7 +76,7 @@ class TestPatternClient(unittest.TestCase):
                                                 0.2222222222222222],
                                     'Kvalue': [2.5, 3.0, 3.0],
                                     'Confidence': [1.0, 1.0, 1.0],
-                                    'Single Occurence Index': [1, 1, 2]})
+                                    'First Occurrence Index': [1, 1, 2]})
 
         self.assertDictEqual(output_df.to_dict(), expected_df.to_dict())
 
@@ -93,7 +93,7 @@ class TestPatternClient(unittest.TestCase):
                                                 0.3333333333333333],
                                     'Kvalue': [2.5, 2.25],
                                     'Confidence': [1.0, 1.0],
-                                    'Single Occurence Index': [1, 4]})
+                                    'First Occurrence Index': [1, 4]})
 
         self.assertDictEqual(output_df.to_dict(), expected_df.to_dict())
 

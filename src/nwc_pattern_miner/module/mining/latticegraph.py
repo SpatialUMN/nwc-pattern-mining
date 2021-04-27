@@ -2,7 +2,6 @@
 # A Dag; storing parent child relationships; Level order traversal
 import json
 import itertools
-from ..utilities import print_fun
 from .latticenode import LatticeNode
 
 # File specific constants
@@ -19,8 +18,6 @@ class LatticeGraph:
 
         # Initializing lattice graph
         self._init_graph(num_of_dim)
-        message = 'Creating Lattice Graph of Nodes: ' + str(self.num_of_nodes)
-        print_fun(message)
 
     def _create_node(self, depth: int, dimension: tuple) -> None:
         """Summary

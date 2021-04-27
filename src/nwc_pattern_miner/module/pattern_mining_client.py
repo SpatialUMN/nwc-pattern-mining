@@ -12,7 +12,7 @@ from .patternminer import PatternMiner
 
 # Specific constants
 dummy_col_name = 'dummy'
-dummy_col_value = 'NA'
+dummy_col_value = 'na'
 support_output_metrics = ['crossk', 'support']
 supported_output_types = ['threshold', 'topk']
 
@@ -22,7 +22,7 @@ def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
                            pattern_length: int, confidence_threshold: float = -1,
                            lag: int = 0, invalid_seq_indexes: list = [],
                            output_metric: str = 'crossk',
-                           output_type: str = 'threshold',
+                           output_type: str = 'topk',
                            output_threshold: float = -1,
                            topk: int = 100) -> pd.DataFrame:
     """Summary

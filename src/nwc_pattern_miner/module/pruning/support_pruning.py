@@ -1,5 +1,4 @@
 # Apriori algorithm, uses support of lower nodes to prune parent nodes and prevent enumeration
-import copy
 import pandas as pd
 
 from ..utilities import stringify_dataframe
@@ -19,10 +18,19 @@ class SupportPruning(PruningStrategy):
                  threshold_value: float) -> None:
 
         self._data = data
+        self._data_values = data.values
+        self._num_of_dims = num_of_dims
         self._threshold_value = threshold_value
         self._enum_pattern_inst = enum_pattern_inst
-        self._lattice_graph_inst = LatticeGraph(num_of_dims)
         self._pattern_count_inst = pattern_count_inst
+
+    def _reconstruct_pattern_df(self, start_index: int, end_index: int,
+                                column_indexes: list) -> pd.DataFrame:
+        """Summary
+            uses information provided as arguments to slice and index specific parts of dataframe
+        """
+        return pd.DataFrame(self._data_values[start_index:end_index, column_indexes],
+                            columns=self._data.columns[column_indexes])
 
     def prune_and_enumerate_patterns(self, start_index: int, end_index: int) -> list:
         """Summary
@@ -32,12 +40,11 @@ class SupportPruning(PruningStrategy):
             2. If a pattern is below threshold, prune it's parents following apriori
             3. No need to store pruning information of a pattern as it already enumerated
         """
-        # avoid creation of lattice graph, again and again
-        clone_lattice_graph_inst = copy.deepcopy(self._lattice_graph_inst)
+        lattice_graph_inst = LatticeGraph(self._num_of_dims)
 
         nodes_enumerated = 0
         nodes_not_enumerated = 0
-        lattice_graph = clone_lattice_graph_inst.get_graph()
+        lattice_graph = lattice_graph_inst.get_graph()
 
         for level, nodes_per_level in sorted(lattice_graph.items(), reverse=True):
             entire_level_pruned = True
@@ -50,7 +57,7 @@ class SupportPruning(PruningStrategy):
                     continue
 
                 # b. would need to reconstruct the pattern dataframe from indexes, to enumerate
-                pattern_df = super()._reconstruct_pattern_df(
+                pattern_df = self._reconstruct_pattern_df(
                     start_index, end_index, list(node_dimensions))
 
                 # c. check if pattern already enumerated, if not then enumerate
@@ -80,12 +87,12 @@ class SupportPruning(PruningStrategy):
                                                                   threshold_metric,
                                                                   self._threshold_value):
                     # pruning all parents if node not above
-                    clone_lattice_graph_inst.prune_nodes_recursively(
+                    lattice_graph_inst.prune_nodes_recursively(
                         level, node_dimensions, prune_type)
                 else:
                     entire_level_pruned = False
 
             if entire_level_pruned:
-                return clone_lattice_graph_inst.num_of_nodes - nodes_enumerated
+                return lattice_graph_inst.num_of_nodes - nodes_enumerated
 
         return nodes_not_enumerated
