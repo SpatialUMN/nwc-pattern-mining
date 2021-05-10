@@ -8,7 +8,7 @@ from ..utilities import print_fun
 from collections import OrderedDict
 
 # Specific constants
-short_window_bin_size = 50
+short_window_bin_size = 50  # Assuming pattern length would not be greater
 patterns_alert_threshold = 10000
 metric_names = ['support', 'crossk', 'confidence']
 metric_col_names = ['Count', 'Support', 'Kvalue',
@@ -68,7 +68,7 @@ class EnumeratedPattern:
         key = index // short_window_bin_size
 
         if key not in self._anomalous_windows_map:
-            key += 1
+            return list()
 
         return self._anomalous_windows_map[key]
 

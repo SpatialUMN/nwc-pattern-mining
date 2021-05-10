@@ -23,6 +23,7 @@ Non-compliant Window Co-occurrence pattern mining in temporal data
 - **output_type**: `{'topk', 'threshold'}, default='topk';` Type of output for sequence patterns mined
 - **output_threshold**: `float, default= -1`; Threshold cutoff used to get output sequence patterns, if `output_type='threshold'`
 - **topk**: `int, default=100`; Top-k sequence patterns obtained based on `output_metric`, if `output_type='topk'`
+- **pruning_type**: `str, default=apriori`; Between `[apriori, br-dr]`, both have same run-time, 'br-dr' does more enumerations but enumeration speed is much faster due to UB pruning. 
 
 ## Sample Input DataFrame:
 | engrpm      | EGRkgph     | MSPhum      | EngTq       | NCWindow    |
