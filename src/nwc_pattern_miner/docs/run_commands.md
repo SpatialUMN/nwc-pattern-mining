@@ -4,6 +4,7 @@
 - **candidatepattern**: `python -m tests.mining.test_candidatepattern`
 - **patternclient**: `python -m tests.test_pattern_mining_client`
 - **supportpruning**: `python -m tests.pruning.test_support_pruning`
+- **ubpruning**: `python -m tests.pruning.test_ub_pruning`
 - **patternminer**: `python -m tests.test_patternminer`
 
 # Building package:

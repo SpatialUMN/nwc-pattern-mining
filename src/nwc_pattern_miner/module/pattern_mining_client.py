@@ -5,7 +5,7 @@ formats patterns identified in a specific format
 import pandas as pd
 
 from .utilities import print_fun
-from .pruning import SupportPruning
+from .pruning import SupportPruning, UBPruning
 from .mining import EnumeratedPattern
 from .patterncount import SequenceMap
 from .patternminer import PatternMiner
@@ -13,6 +13,8 @@ from .patternminer import PatternMiner
 # Specific constants
 dummy_col_name = 'dummy'
 dummy_col_value = 'na'
+ub_pruning = 'bi-dr'
+supp_pruning = 'apriori'
 support_output_metrics = ['crossk', 'support']
 supported_output_types = ['threshold', 'topk']
 
@@ -23,8 +25,8 @@ def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
                            lag: int = 0, invalid_seq_indexes: list = [],
                            output_metric: str = 'crossk',
                            output_type: str = 'topk',
-                           output_threshold: float = -1,
-                           topk: int = 100) -> pd.DataFrame:
+                           output_threshold: float = -1, topk: int = 100,
+                           pruning_type: str = 'bi-dr') -> pd.DataFrame:
     """Summary
         Main function / interface for the package (Driver function)
     """
@@ -42,8 +44,12 @@ def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
 
     # Instantiate concrete strategy for pruning
     num_of_dims = series_df.shape[1] - 1
-    pruning_inst = SupportPruning(
-        num_of_dims, series_df, enum_patterns_inst, seqmap_inst, support_threshold)
+    if pruning_type == supp_pruning:
+        pruning_inst = SupportPruning(
+            num_of_dims, series_df, enum_patterns_inst, seqmap_inst, support_threshold)
+    else:
+        pruning_inst = UBPruning(num_of_dims, series_df, enum_patterns_inst,
+                                 seqmap_inst, support_threshold, crossk_threshold)
 
     # Instantiate miner instance
     message = 'Processing Anomalous Windows'

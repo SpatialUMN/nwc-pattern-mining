@@ -43,7 +43,6 @@ class SupportPruning(PruningStrategy):
         lattice_graph_inst = LatticeGraph(self._num_of_dims)
 
         nodes_enumerated = 0
-        nodes_not_enumerated = 0
         lattice_graph = lattice_graph_inst.get_graph()
 
         for level, nodes_per_level in sorted(lattice_graph.items(), reverse=True):
@@ -53,7 +52,6 @@ class SupportPruning(PruningStrategy):
 
                 # a. check if node is pruned, if yes, move to next node
                 if latticenode_inst.is_node_pruned():
-                    nodes_not_enumerated += 1
                     continue
 
                 # b. would need to reconstruct the pattern dataframe from indexes, to enumerate
@@ -77,10 +75,6 @@ class SupportPruning(PruningStrategy):
                     # Counting nodes enumerated
                     nodes_enumerated += 1
 
-                else:
-                    # just to count node that does not need to be enumerated due to hashing
-                    nodes_not_enumerated += 1
-
                 # d. Now that pattern is enumerated, we have threshold information about it
                 # two conditions for pruning parent patterns (hashing and apriori)
                 if not self._enum_pattern_inst.is_above_threshold(pattern_index,
@@ -93,6 +87,6 @@ class SupportPruning(PruningStrategy):
                     entire_level_pruned = False
 
             if entire_level_pruned:
-                return lattice_graph_inst.num_of_nodes - nodes_enumerated
+                break
 
-        return nodes_not_enumerated
+        return (lattice_graph_inst.num_of_nodes - nodes_enumerated)

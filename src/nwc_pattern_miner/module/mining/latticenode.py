@@ -5,7 +5,7 @@ class LatticeNode:
         self._parents = list()
         self._children = list()
         self._is_pruned = False
-        self.superpattern_count = 0
+        self.superpattern_count = -1
         self.dimensions = dimensions
 
     def is_node_pruned(self):
