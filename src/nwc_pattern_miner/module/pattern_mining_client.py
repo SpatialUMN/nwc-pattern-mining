@@ -26,7 +26,7 @@ def mine_sequence_patterns(series_df: pd.DataFrame, nc_window_col: str,
                            output_metric: str = 'crossk',
                            output_type: str = 'topk',
                            output_threshold: float = -1, topk: int = 100,
-                           pruning_type: str = 'bi-dr') -> pd.DataFrame:
+                           pruning_type: str = 'apriori') -> pd.DataFrame:
     """Summary
         Main function / interface for the package (Driver function)
     """
