@@ -38,7 +38,7 @@ class TestUBPruning(unittest.TestCase):
     def test_prune_and_enumerate_patterns(self):
         # tested all code branches through variations of manual tests
         output_pruning = list()
-        expected_pruning = [1, 5]
+        expected_pruning = [4, 15]
 
         # save by apriori and hashing
         start_index, end_index = (4, 6)

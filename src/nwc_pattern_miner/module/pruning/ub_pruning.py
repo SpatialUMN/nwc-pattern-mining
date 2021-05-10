@@ -31,7 +31,7 @@ class UBPruning(PruningStrategy):
         self._enum_pattern_inst = enum_pattern_inst
         self._crossk_const = enum_pattern_inst._crossk_const
         self._pattern_count_inst = pattern_count_inst
-        self._singleton_joint_counts = dict()
+        self._children_joint_counts = dict()
 
     def _reconstruct_pattern_df(self, start_index: int, end_index: int,
                                 column_indexes: list) -> pd.DataFrame:
@@ -53,6 +53,7 @@ class UBPruning(PruningStrategy):
         nodes_enumerated = 0
         entire_level_pruned = True
         nodes_per_level = lattice_graph_inst.get_graph()[level]
+        self._children_joint_counts[level] = dict()
 
         for node_dimensions, latticenode_inst in nodes_per_level.items():
 
@@ -78,10 +79,9 @@ class UBPruning(PruningStrategy):
                 self._enum_pattern_inst.enumerate_pattern(
                     pattern_str, pattern_occurences)
 
-                # Storing joint counts of singletons / leaves
-                if len(node_dimensions) == 1:
-                    self._singleton_joint_counts[node_dimensions[0]
-                                                 ] = self._enum_pattern_inst._joinset_cardinality[-1]
+                # Storing joint counts of children during bottom-up
+                child_count = self._enum_pattern_inst._joinset_cardinality[-1]
+                self._children_joint_counts[level][node_dimensions] = child_count
 
                 # Counting nodes enumerated
                 nodes_enumerated += 1
@@ -99,29 +99,23 @@ class UBPruning(PruningStrategy):
 
         return nodes_enumerated, entire_level_pruned
 
-    def _get_joint_singleton_count(self, node_dimensions: set, count_type: str):
+    def _get_max_child_joint_count(self, node_dimensions: set, last_bottomost_level: int):
         """Summary
-            get join cardinaltiy max / min count of leaves
+            get max joint cardinality among children
         Args:
             node_dimensions (set): Node for which UBmax and UBmin is required
             count_type (str): max / min for type of joint singleton count
         """
         joint_count = -1
-        if count_type == max_type:
-            for key, val in self._singleton_joint_counts.items():
-                if key in node_dimensions and val > joint_count:
-                    joint_count = val
-        else:
-            # it's UBmin count
-            joint_count = sys.maxint
-            for key, val in self._singleton_joint_counts.items():
-                if key in node_dimensions and val < joint_count:
-                    joint_count = val
+        for key, val in self._children_joint_counts[last_bottomost_level].items():
+            if set(key).issubset(node_dimensions) and val > joint_count:
+                joint_count = val
 
         return joint_count
 
     def _upperbound_pruning(self, start_index: int, end_index: int,
-                            lattice_graph_inst: LatticeGraph, level: int) -> None:
+                            lattice_graph_inst: LatticeGraph, level: int,
+                            last_bottomost_level: int) -> None:
         """Summary
             UB based pruning top down
         Args:
@@ -142,10 +136,10 @@ class UBPruning(PruningStrategy):
 
             # b. check not root, then calculate UBmax and UBmin before pattern expansion
             if level != 0:
-                max_leaf_count = self._get_joint_singleton_count(
-                    node_dimensions, max_type)
+                max_child_count = self._get_max_child_joint_count(
+                    node_dimensions, last_bottomost_level)
                 ub_max = self._crossk_const * \
-                    (max_leaf_count / latticenode_inst.superpattern_count)
+                    (max_child_count / latticenode_inst.superpattern_count)
 
                 if ub_max < self._threshold_crossk_value:
                     # prune all children of current node
@@ -199,7 +193,8 @@ class UBPruning(PruningStrategy):
 
             # h. If the node is root, check UBmax
             if level == 0:
-                max_leaf_count = max(self._singleton_joint_counts.values())
+                max_leaf_count = self._get_max_child_joint_count(
+                    node_dimensions, last_bottomost_level)
                 ub_max = self._crossk_const * \
                     (max_leaf_count / curr_pattern_count)
 
@@ -251,7 +246,8 @@ class UBPruning(PruningStrategy):
             # top-down
             if topmost_level <= bottomost_level and not stop_execution:
                 nodes_enumerated, stop_execution = self._upperbound_pruning(
-                    start_index, end_index, lattice_graph_inst, topmost_level)
+                    start_index, end_index, lattice_graph_inst, topmost_level,
+                    bottomost_level + 1)
 
                 topmost_level += 1
                 total_nodes_enumerated += nodes_enumerated
